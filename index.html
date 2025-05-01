@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Video.js HLS Player</title>
+  <link href="https://vjs.zencdn.net/8.9.0/video-js.css" rel="stylesheet" />
+  <style>
+    body {
+      padding: 40px;
+      font-family: sans-serif;
+      background: #f7f7f7;
+      text-align: center;
+    }
+    .video-js {
+      width: 100%;
+      margin: auto;
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Live Stream using Video.js</h2>
+
+  <video
+    id="videoPlayer"
+    class="video-js vjs-default-skin"
+    controls
+    autoplay
+    muted
+    playsinline
+  >
+    <source src="http://144.202.19.126:8083/play/hls/test_camera/index.m3u8" type="application/x-mpegURL" />
+    Your browser does not support the video tag or HLS.
+  </video>
+
+  <script src="https://vjs.zencdn.net/8.9.0/video.min.js"></script>
+  <script>
+    var player = videojs('videoPlayer');
+  </script>
+</body>
+</html>
