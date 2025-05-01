@@ -8,13 +8,26 @@ import (
 	"time"
 
 	"github.com/deepch/vdk/format/ts"
-
 	"github.com/gin-gonic/gin"
 )
 
 func serveHTTP() {
 	router := gin.Default()
 	gin.SetMode(gin.DebugMode)
+
+	// Add CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins or set a specific one
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
+
+	// Load templates
 	router.LoadHTMLGlob("web/templates/*")
 	router.GET("/", func(c *gin.Context) {
 		fi, all := Config.list()
@@ -36,15 +49,22 @@ func serveHTTP() {
 			"version":  time.Now().String(),
 		})
 	})
+
+	// Routes for streaming
 	router.GET("/play/hls/:suuid/index.m3u8", PlayHLS)
 	router.GET("/play/hls/:suuid/segment/:seq/file.ts", PlayHLSTS)
+
+	// Static files
 	router.StaticFS("/static", http.Dir("web/static"))
+
+	// Run the server
 	err := router.Run(Config.Server.HTTPPort)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
 
+// PlayHLS serves the HLS m3u8 playlist
 func PlayHLS(c *gin.Context) {
 	suuid := c.Param("suuid")
 	if !Config.ext(suuid) {
@@ -65,12 +85,12 @@ func PlayHLS(c *gin.Context) {
 			}
 			return
 		}
-		log.Println("Play list not ready wait or try update page")
+		log.Println("Play list not ready, wait or try updating the page")
 		time.Sleep(1 * time.Second)
 	}
 }
 
-//PlayHLSTS send client ts segment
+// PlayHLSTS serves the TS segment
 func PlayHLSTS(c *gin.Context) {
 	suuid := c.Param("suuid")
 	if !Config.ext(suuid) {
@@ -94,7 +114,7 @@ func PlayHLSTS(c *gin.Context) {
 		return
 	}
 	if len(seqData) == 0 {
-		log.Println(err)
+		log.Println("No data found")
 		return
 	}
 	for _, v := range seqData {
